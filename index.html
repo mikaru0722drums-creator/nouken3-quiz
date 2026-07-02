@@ -57,6 +57,13 @@ padding:12px 14px;font-size:14px;margin-top:6px;display:none;}
 .bar2 .btn{margin-top:0;}
 .mini{font-size:12px;color:var(--mut);text-align:center;margin-top:10px;}
 .hide{display:none!important;}
+details.tip{border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;background:#fff;overflow:hidden;}
+details.tip summary{padding:12px 14px;font-weight:600;font-size:15px;cursor:pointer;list-style:none;color:var(--tx);}
+details.tip summary::-webkit-details-marker{display:none;}
+details.tip summary::before{content:"＋ ";color:var(--g);font-weight:800;}
+details.tip[open] summary::before{content:"－ ";}
+details.tip .tipd{padding:0 14px 12px;font-size:14px;color:#333;line-height:1.75;}
+.tsec{font-weight:700;color:var(--g);margin:18px 0 8px;font-size:15px;border-bottom:2px solid #e8f5e9;padding-bottom:4px;}
 .floatnav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);
 padding:10px 16px;border-top:1px solid #e5e7eb;max-width:640px;margin:0 auto;}
 .genrewrap{display:flex;gap:8px;flex-wrap:wrap;}
@@ -74,6 +81,7 @@ background:#fff;color:var(--g);cursor:pointer;}
 
 <!-- START -->
 <div id="start">
+  <button class="btn sec" id="tipsBtn" style="margin-top:16px;">📖 出る所だけ攻略メモを見る</button>
   <div class="card">
     <h2>出題する年度</h2>
     <div id="yearList"></div>
@@ -129,6 +137,12 @@ background:#fff;color:var(--g);cursor:pointer;}
   </div>
   <button class="btn" id="againWrong">まちがえた問題だけ解き直す</button>
   <button class="btn sec" id="home">最初の画面へ</button>
+</div>
+
+<!-- TIPS -->
+<div id="tips" class="hide">
+  <div class="card" id="tipsBody"></div>
+  <button class="btn" id="tipsBack">← 問題を解く画面へ</button>
 </div>
 
 </div>
@@ -197,7 +211,7 @@ document.getElementById("startBtn").onclick=()=>{
   show("quiz"); render();
 };
 
-function show(id){ ["start","quiz","result"].forEach(s=>document.getElementById(s).classList.toggle("hide",s!==id)); window.scrollTo(0,0); }
+function show(id){ ["start","quiz","result","tips"].forEach(s=>document.getElementById(s).classList.toggle("hide",s!==id)); window.scrollTo(0,0); }
 
 function render(){
   const q=quiz[idx];
@@ -279,6 +293,72 @@ document.getElementById("againWrong").onclick=()=>{
   quiz=shuffle(wrong.slice()); idx=0; correct=0; wrong=[]; answered=false; show("quiz"); render();
 };
 document.getElementById("hsub").textContent = DATA.length+"問収録・オフライン動作";
+
+const TIPS=[
+{sec:"📊 出題傾向（まずここ）",items:[
+ {t:"分野の配分",d:"栽培(1)+(2)で約28問＝全体の56%。ここが最大の得点源。食は約11問、農業全般・環境は各約6問。合格ラインは6割(30問)。"},
+ {t:"戦略の結論",d:"栽培をほぼ取れれば合格圏。栽培は毎年同じ知識・同じ作物しか出ない。農業全般・環境は数字暗記で後回しでOK。"},
+ {t:"毎年出る鉄板(多い順)",d:"肥料の3要素／イネ／レタス／エダマメ・根粒菌／光合成／地球温暖化／体内の水分／カブ／病気・害虫防除／食中毒／シソ／イチゴ／メタボ／発酵／コマツナ …ほぼ全部毎年。"},
+]},
+{sec:"🌱 栽培の基礎（最頻出・全部鉄板）",items:[
+ {t:"肥料の3要素",d:"窒素=葉茎(葉肥)／リン酸=花・実(実肥)／カリ=根・茎を丈夫に・耐寒耐病(根肥)。"},
+ {t:"有機質肥料",d:"油かす=窒素／骨粉=リン酸／草木灰=カリ／魚かす=窒素+リン酸。"},
+ {t:"化学肥料",d:"高度化成=3要素の合計30%以上。「8-8-8」=各8%。"},
+ {t:"光合成",d:"光＋水＋二酸化炭素→炭水化物＋酸素。葉緑体で行う。※原料を「酸素」と書いたら誤り＝定番ひっかけ。"},
+ {t:"呼吸",d:"昼も夜も行う。酸素を吸って二酸化炭素を出す。"},
+ {t:"気孔",d:"主に葉の裏。蒸散(水の出口)。"},
+ {t:"発芽の3要素",d:"水・空気(酸素)・温度。※光・肥料は不要。"},
+ {t:"好光性/嫌光性種子",d:"好光性(覆土は薄く)=レタス・カブ・ニンジン・シソ／嫌光性(覆土する)=トマト・ナス・カボチャ。"},
+ {t:"土壌pH",d:"多くの作物は5.5〜6.5の弱酸性。ホウレンソウは酸性に弱い、ジャガイモは酸性寄りでよい。石灰でpHを上げる。"},
+ {t:"野菜の原産地",d:"ナス=インド／トマト=南米／キュウリ=ヒマラヤ／アシタバ・ミツバ=日本。"},
+ {t:"害虫防除",d:"天敵=生物的／防虫ネット・シルバーマルチ=物理的／輪作・混植・抵抗性品種=耕種的。病害の約8割はカビ。"},
+ {t:"団粒構造",d:"良い土。微生物が有機物を分解して作られる。"},
+]},
+{sec:"🥬 作物（毎年これだけ出る）",items:[
+ {t:"イネ",d:"塩水選は沈んだもみを使う(比重1.13)／積算水温100℃で発芽(ハト胸状態が種まき適期)／中干し=土に酸素供給／分げつ=新しい茎／モザイク病は種子伝染しない。"},
+ {t:"レタス",d:"キク科・和名チシャ／好光性で覆土薄く／高温・長日でとう立ち／冷涼15〜20℃／結球は内葉が発達。"},
+ {t:"エダマメ・根粒菌",d:"根粒菌は空気中の窒素を固定して供給(酸素ではない)／エダマメは炭水化物を供給／暑さに強く寒さに弱い／だだちゃ豆=山形／追肥に窒素多用はNG／収穫後は早く食べる。"},
+ {t:"カブ",d:"アブラナ科(ナス科ではない)／乾燥に弱い／裂根=水分の急変／赤カブ=アントシアニン／砂多めの土で肌がきれい。"},
+ {t:"コマツナ",d:"アブラナ科／酸性に強く連作障害が出にくい／都市近郊で周年栽培。"},
+ {t:"シソ",d:"青ジソ=大葉(薬味)／赤ジソ=アク多く加工用(梅干し色づけ)／好光性で覆土薄く／日当たり良すぎると葉が硬く苦味／シソ科(エゴマ・バジル・ミント)／エゴマ油は種子から。"},
+ {t:"ジャガイモ",d:"ナス科・連作障害あり／緑化・芽にソラニン・チャコニン／酸性でそうか病抑制。"},
+ {t:"イチゴ",d:"バラ科／果実は花床(花托)が肥大(子房ではない)／クラウン=短い茎で埋めない／一季成りは秋の低温・短日で花芽分化／ランナーの2〜3番目の子株／連作障害あり。"},
+]},
+{sec:"🍚 食（暗記で確実に取れる）",items:[
+ {t:"五大栄養素",d:"三大(炭水化物・脂質・タンパク質)＋無機質・ビタミン。タンパク質=体をつくる、ビタミン=調子を整える。水分は栄養素ではない。食物繊維は炭水化物の一種。"},
+ {t:"だし",d:"昆布=グルタミン酸／かつお節=イノシン酸／しいたけ=グアニル酸。"},
+ {t:"発酵",d:"味噌・醤油・日本酒=麹菌＋酵母／納豆=納豆菌／ぬか漬け・ヨーグルト=乳酸菌。"},
+ {t:"食品の表示",d:"輸入=原産国名／解凍品=「解凍」／養殖=「養殖」。"},
+ {t:"消費/賞味期限",d:"消費期限=安全の限界(劣化早い)／賞味期限=おいしさの限界(劣化遅い、過ぎてもすぐダメではない)。"},
+ {t:"食中毒",d:"細菌3原則=つけない・増やさない・殺菌する／ウイルス=持ち込まない・ひろげない・つけない・殺す。冷蔵・冷凍では菌は死なない。"},
+ {t:"和食・旬・箸",d:"和食=一汁三菜、2013年ユネスコ無形文化遺産／旬:春=フキ・新タマネギ、冬=ゴボウ・ホウレンソウ／取り分けは「取り箸」、渡し箸・迷い箸はマナー違反。"},
+]},
+{sec:"🌍 農業全般・環境（数字暗記）",items:[
+ {t:"食料自給率",d:"日本はカロリーベース約38%で先進国最低クラス。最も高いのはカナダ。米はほぼ100%、大豆は低い。"},
+ {t:"パリ協定",d:"2020年以降／産業革命前比+2℃以内(できれば1.5℃)／21世紀後半に排出と吸収を実質ゼロ。"},
+ {t:"地球温暖化",d:"温室効果ガスの約6割がCO₂。赤外線を吸収(紫外線ではない)。いもち病は東北→北海道へ北上。果皮の着色不良。"},
+ {t:"フード・マイレージ",d:"輸送量(t)×距離(km)、小さいほど良い。イギリスの運動が元で農水省が指標化。日本はアメリカの約3倍。"},
+ {t:"生物多様性",d:"生態系・種・遺伝子の3階層。遺伝子の多様性=同種でも遺伝子が均一でなく多様。"},
+ {t:"野生鳥獣被害",d:"獣類が8割強、最多はシカ、次いでイノシシ。3本柱=個体群管理・侵入防止・生息環境管理。"},
+ {t:"その他",d:"耕作放棄地の原因1位=高齢化・労働力不足／直売所=少量出荷可・農家が値段を決める／就業人口=減少・高齢化(65歳以上が7割前後)。"},
+]},
+];
+function renderTips(){
+  const b=document.getElementById("tipsBody"); b.innerHTML="";
+  const intro=document.createElement("div");
+  intro.innerHTML='<h2 style="margin:0 0 4px;">📖 出る所だけ攻略メモ</h2><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">6年分の分析から毎年出る要点だけ。タップで開く。</div>';
+  b.appendChild(intro);
+  TIPS.forEach(sec=>{
+    const h=document.createElement("div"); h.className="tsec"; h.textContent=sec.sec; b.appendChild(h);
+    sec.items.forEach(it=>{
+      const d=document.createElement("details"); d.className="tip";
+      d.innerHTML="<summary>"+escapeHtml(it.t)+"</summary><div class='tipd'>"+escapeHtml(it.d)+"</div>";
+      b.appendChild(d);
+    });
+  });
+}
+document.getElementById("tipsBtn").onclick=()=>{ renderTips(); show("tips"); };
+document.getElementById("tipsBack").onclick=()=>{ show("start"); };
 </script>
 </body>
 </html>
